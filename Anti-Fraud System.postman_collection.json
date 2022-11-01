@@ -1,0 +1,409 @@
+{
+	"info": {
+		"_postman_id": "9caa88dd-7d2f-41a6-b7a7-590f47e8ac61",
+		"name": "Anti-Fraud System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15020736"
+	},
+	"item": [
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "Get all users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:28852/api/auth/list",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "28852",
+							"path": [
+								"api",
+								"auth",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sign-up user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"makaka\",\n  \"username\": \"makaka\",\n  \"password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:28852/api/auth/user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "28852",
+							"path": [
+								"api",
+								"auth",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete user",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:28852/api/auth/user/makaka",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "28852",
+							"path": [
+								"api",
+								"auth",
+								"user",
+								"makaka"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change user role",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"makaka\",\n  \"role\": \"MERCHANT\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:28852/api/auth/role",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "28852",
+							"path": [
+								"api",
+								"auth",
+								"role"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lock|Unlock user",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"jordan\",\n  \"operation\": \"LOCK\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:28852/api/auth/access",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "28852",
+							"path": [
+								"api",
+								"auth",
+								"access"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "antifraud",
+			"item": [
+				{
+					"name": "transaction",
+					"item": [
+						{
+							"name": "Add transaction",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": 150,\n  \"ip\": \"192.17.1.1\",\n  \"number\": \"4000009455296122\",\n  \"region\": \"EAP\",\n  \"date\": \"2022-01-22 16:04:00\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/transaction",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"transaction"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add feedback to transaction",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"transactionId\": 0,\n  \"feedback\": \"MANUAL_PROCESSING\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/transaction",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"transaction"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "history",
+					"item": [
+						{
+							"name": "Get transaction history by card number",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/history/4000008449433402",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"history",
+										"4000008449433402"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get transaction history",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/history",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"history"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "stolencard",
+					"item": [
+						{
+							"name": "Get stollencards",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/stolencard",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"stolencard"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add stollencard",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"number\": \"4000008449433403\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/stolencard",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"stolencard"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete stollen card",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/stolencard/4000008449433403",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"stolencard",
+										"4000008449433403"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "suspicious",
+					"item": [
+						{
+							"name": "Get blocked ip",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/suspicious-ip/192.168.1.1",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"suspicious-ip",
+										"192.168.1.1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add ip to block list",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"ip\": \"192.168.1.1\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:28852/api/antifraud/suspicious-ip",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "28852",
+									"path": [
+										"api",
+										"antifraud",
+										"suspicious-ip"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove ip from block list",
+							"request": {
+								"method": "GET",
+								"header": []
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

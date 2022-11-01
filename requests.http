@@ -1,0 +1,118 @@
+### Get transaction history
+GET http://localhost:28852/api/antifraud/history
+
+### Get transaction history by card number
+GET http://localhost:28852/api/antifraud/history/4000008449433403
+
+### Add feedback to transaction
+PUT http://localhost:28852/api/antifraud/transaction
+Content-Type: application/json
+
+{
+  "transactionId": 1,
+  "feedback": "ALLOWED"
+}
+
+### Add transaction
+POST http://localhost:28852/api/antifraud/transaction
+Content-Type: application/json
+
+{
+  "amount": 150,
+  "ip": "192.17.1.1",
+  "number": "4000008449433403",
+  "region": "EAP",
+  "date": "2022-01-22 16:04:00"
+}
+
+### Manual processing
+POST http://localhost:28852/api/antifraud/transaction
+Content-Type: application/json
+
+{
+  "amount": 1400,
+  "ip": "1",
+  "number": "4000009455296122"
+}
+
+### Prohibited
+POST http://localhost:28852/api/antifraud/transaction
+Content-Type: application/json
+
+{
+  "amount": 1600,
+  "ip": "1",
+  "number": "4000009455296122"
+}
+
+### Invalid request
+POST http://localhost:28852/api/antifraud/transaction
+Content-Type: application/json
+
+{
+  "amount": -1
+}
+
+### Sign-up lebron
+POST http://localhost:28852/api/auth/user
+Content-Type: application/json
+
+{
+  "name": "lebron",
+  "username": "james",
+  "password": "123"
+}
+
+### Sign-up jordan
+POST http://localhost:28852/api/auth/user
+Content-Type: application/json
+
+{
+  "name": "air",
+  "username": "jordan",
+  "password": "123"
+}
+
+### Sign-up makaka
+POST http://localhost:28852/api/auth/user
+Content-Type: application/json
+
+{
+  "name": "makaka",
+  "username": "makaka",
+  "password": "123"
+}
+
+### get users
+GET http://localhost:28852/api/auth/list
+Content-Type: application/json
+
+### delete user
+DELETE http://localhost:28852/api/auth/user/jordan
+
+### change role
+PUT http://localhost:28852/api/auth/role
+Content-Type: application/json
+
+{
+  "username": "jordan",
+  "role": "SUPPORT"
+}
+
+### lock user
+PUT http://localhost:28852/api/auth/access
+Content-Type: application/json
+
+{
+  "username": "makaka",
+  "operation": "LOCK>"
+}
+
+### unlock user
+PUT http://localhost:28852/api/auth/access
+Content-Type: application/json
+
+{
+  "username": "makaka",
+  "operation": "UNLOCK>"
+}
