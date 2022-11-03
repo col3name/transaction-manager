@@ -1,6 +1,7 @@
 package com.anti.fraud.system.domain.model.user
 
 import kotlinx.serialization.Serializable
+import javax.persistence.*
 
 @Serializable
 data class UserAuthRequest(val name: String, val username: String, val password: String)
@@ -31,13 +32,19 @@ enum class UserRole {
     MERCHANT, ADMINISTRATOR, SUPPORT
 }
 
+@Entity
+@Table(name = "users")
 data class User(
-    val id: Long,
     val name: String,
+    @Column(unique = true)
     val username: String,
     val password: String,
     var role: UserRole = UserRole.MERCHANT,
-    var locked: Boolean = true
+    var locked: Boolean = true,
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val id: Long = 0,
 )
 
 class AlreadyExistException(message: String) : Exception(message)

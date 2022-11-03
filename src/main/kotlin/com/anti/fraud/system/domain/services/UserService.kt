@@ -1,9 +1,6 @@
 package com.anti.fraud.system.domain.services
 
-import com.anti.fraud.system.domain.model.user.UserAuthRequest
-import com.anti.fraud.system.domain.model.user.UserAuthResponse
-import com.anti.fraud.system.domain.model.user.UserOperationRequest
-import com.anti.fraud.system.domain.model.user.UserRoleChangeRequest
+import com.anti.fraud.system.domain.model.user.*
 
 interface UserService {
     fun createUser(authUser: UserAuthRequest): UserAuthResponse

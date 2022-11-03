@@ -2,6 +2,7 @@ package com.anti.fraud.system.domain.model.antifraud.stolencard
 
 import kotlinx.serialization.Serializable
 import java.util.*
+import javax.persistence.*
 
 fun isValidCreditCardNumber(cardNumber: String): Boolean {
     if (cardNumber.length != 16) {
@@ -33,4 +34,11 @@ fun sumDigits(arr: IntArray?): Int {
 data class AddStolenCard(val number: String)
 
 @Serializable
-data class Card(val id: Long, val number: String)
+@Entity
+@Table(name = "blocked_card")
+data class Card(
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val id: Long = 0,
+    val number: String
+)

@@ -3,6 +3,7 @@ package com.anti.fraud.system.domain.model.antifraud.transaction
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.persistence.*
 
 enum class TransactionStatus {
     ALLOWED, MANUAL_PROCESSING, PROHIBITED, NONE
@@ -51,8 +52,9 @@ data class FeedbackForTransactionResponse(
     val feedback: TransactionStatus,
 )
 
+@Entity
+@Table(name = "transactions")
 data class Transaction(
-    val transactionId: Long,
     val amount: Long,
     val number: String,
     val region: String,
@@ -60,6 +62,10 @@ data class Transaction(
     val status: TransactionStatus,
     val ip: String,
     var feedback: TransactionStatus = TransactionStatus.NONE,
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val transactionId: Long = 0,
 ) {
     fun updateFeedback(value: String) {
         this.feedback = TransactionStatus.valueOf(value)

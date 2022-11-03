@@ -7,25 +7,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-class AntiFaudSystemApplicationTests {
+class AntiFraudSystemApplicationTests {
 
     @Test
     fun contextLoads() {
-//        val blockedIpList: List<IpItem> = mutableListOf()
-//        val first: IpItem? = blockedIpList.firstOrNull { it.ip == "123" }
-//        if (first == null) {
-//            println("null")
-//        } else {
-//            println(first)
-//        }
-
-//        System.out.println("Hello world")
-
         val message = isValidCreditCardNumber("4000008449433403")
         println("$message cardNumber")
-
-//        println("Model.BASE ${Model.BASE}")
-
         println(declineReasonToString(DeclineReason.AMOUNT))
         println("reason ${DeclineReason.AMOUNT.name.lowercase()}")
     }

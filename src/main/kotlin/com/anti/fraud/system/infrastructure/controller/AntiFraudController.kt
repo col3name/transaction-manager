@@ -25,6 +25,7 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.getTransactionHistory(), HttpStatus.OK)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -34,10 +35,13 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.getTransactionHistoryByCardNumber(cardNumber), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: NotFoundException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -45,12 +49,12 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
     @PostMapping("transaction")
     fun addTransaction(@RequestBody transactionAdd: TransactionAddRequest): ResponseEntity<TransactionAddResponse> {
         return try {
-            ResponseEntity(antiFraudService.calculate(transactionAdd), HttpStatus.OK)
+            ResponseEntity(antiFraudService.addTransaction(transactionAdd), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: Exception) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -61,19 +65,19 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.addFeedbackToTransaction(transaction), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: NotFoundException) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: AlreadyExistException) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.CONFLICT)
         } catch (e: UnprocessableEntityException) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.UNPROCESSABLE_ENTITY)
         } catch (e: Exception) {
-            println(e)
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -83,6 +87,7 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.getAllSuspiciousIp(), HttpStatus.OK)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -92,10 +97,13 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.addSuspiciousIp(ipRequest), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: AlreadyExistException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.CONFLICT)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -106,10 +114,13 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
             antiFraudService.removeSuspiciousIp(ip)
             ResponseEntity(ActionResult("IP $ip removed!"), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: NotFoundException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -119,6 +130,7 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.getAllStolenCard(), HttpStatus.OK)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -128,10 +140,13 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
         return try {
             ResponseEntity(antiFraudService.addStolenCard(ipRequest), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: AlreadyExistException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.CONFLICT)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -142,10 +157,13 @@ class AntiFraudController(@Autowired val antiFraudService: AntiFraudService) {
             antiFraudService.removeStolenCard(cardNumber)
             ResponseEntity(ActionResult("Card $cardNumber successfully removed!"), HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: NotFoundException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }

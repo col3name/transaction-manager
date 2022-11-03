@@ -3,7 +3,7 @@ package com.anti.fraud.system.domain.model.antifraud.suspiciousIp
 import kotlinx.serialization.Serializable
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
+import javax.persistence.*
 
 @Serializable
 data class AddSuspiciousIpRequest(var ip: String) {
@@ -26,8 +26,15 @@ fun isValidInet4Address(ip: String): Boolean {
     return matcher.matches()
 }
 
-
 @Serializable
 data class AddSuspiciousIpResponse(val id: Long, val ip: String)
 
-data class IpItem(val id: Long, val ip: String)
+@Entity
+@Table(name = "blocked_ip")
+data class IpItem(
+    val ip: String,
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val id: Long = 0,
+)

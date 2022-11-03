@@ -10,10 +10,15 @@ import com.anti.fraud.system.domain.model.antifraud.suspiciousIp.isValidInet4Add
 import com.anti.fraud.system.domain.model.antifraud.transaction.*
 import com.anti.fraud.system.domain.model.user.AlreadyExistException
 import com.anti.fraud.system.domain.model.user.NotFoundException
+import com.anti.fraud.system.domain.repository.BlockedCardRepository
+import com.anti.fraud.system.domain.repository.SuspiciousIpRepository
+import com.anti.fraud.system.domain.repository.TransactionRepository
 import com.anti.fraud.system.domain.services.AntiFraudService
 import com.anti.fraud.system.domain.services.RegionValidator
 import com.anti.fraud.system.domain.services.TransactionLimitCalculator
 import com.anti.fraud.system.domain.services.UnprocessableEntityException
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
@@ -22,31 +27,116 @@ import java.util.*
 
 @Service
 class AntiFraudServiceImpl(
-    var blockedIpList: MutableList<IpItem> = mutableListOf(),
-    var stolenCardList: MutableList<Card> = mutableListOf(),
-    var transactions: MutableList<Transaction> = mutableListOf(),
+    @Autowired
+    val blockedIpRepository: SuspiciousIpRepository,
+    @Autowired
+    val blockedCardRepository: BlockedCardRepository,
+    @Autowired
+    val transactionRepository: TransactionRepository,
+
     val regionValidator: RegionValidator,
     val transactionLimitCalculator: TransactionLimitCalculator
 ) : AntiFraudService {
     private var limitAllowed: Long = 200L
     private var limitManualProcessing: Long = 1500L
 
-    override fun getTransactionHistory(): List<Transaction> = transactions
+    override fun getTransactionHistory(): List<Transaction> = transactionRepository.findAll()
 
     override fun getTransactionHistoryByCardNumber(cardNumber: String): List<Transaction> {
         if (!isValidCreditCardNumber(cardNumber)) {
             throw IllegalArgumentException("invalid credit card number")
         }
-        val history = transactions.filter { it.number == cardNumber }
+
+        val history = transactionRepository.findByNumber(cardNumber)
         if (history.isEmpty()) {
             throw NotFoundException("not found $cardNumber transaction history")
         }
         return history
     }
 
-    override fun calculate(transaction: TransactionAddRequest): TransactionAddResponse {
-        val dateTime = validateTime(transaction.date)
-        if (dateTime.isEmpty) {
+    override fun addTransaction(transaction: TransactionAddRequest): TransactionAddResponse {
+        val transactionTime = validateTime(transaction.date)
+        validateTransaction(transactionTime, transaction)
+        val time = transactionTime.get()
+
+        val (status, declineReasonList) =
+            determineStatusAndDeclineReasons(transaction, time)
+
+        transactionRepository.save(
+            Transaction(
+                transaction.amount,
+                transaction.number,
+                transaction.region,
+                time,
+                status,
+                transaction.ip,
+            )
+        )
+        return TransactionAddResponse(status.toString(), declineReasonList)
+    }
+
+    private fun determineStatusAndDeclineReasons(
+        transaction: TransactionAddRequest,
+        time: LocalDateTime
+    ): Pair<TransactionStatus, MutableSet<DeclineReason>> {
+        val dateTime = time.minusHours(2)
+
+        var status: TransactionStatus = TransactionStatus.PROHIBITED
+        val declineReasonList = mutableSetOf<DeclineReason>()
+
+        if (transaction.amount < limitAllowed) {
+            status = TransactionStatus.ALLOWED
+        } else if (transaction.amount < limitManualProcessing) {
+            status = TransactionStatus.MANUAL_PROCESSING
+            declineReasonList.add(DeclineReason.AMOUNT)
+        } else {
+            declineReasonList.add(DeclineReason.AMOUNT)
+        }
+
+        if (blockedCardRepository.findByNumber(transaction.number).isNotEmpty()) {
+            status = TransactionStatus.PROHIBITED
+            declineReasonList.add(DeclineReason.CARD_NUMBER)
+        }
+
+        if (blockedIpRepository.findByIp(transaction.ip).isNotEmpty()) {
+            status = TransactionStatus.PROHIBITED
+            declineReasonList.add(DeclineReason.IP)
+        }
+
+        val distinctCardNumberByRegions =
+            transactionRepository.findDistinctByRegionAndDateLessThanAndStatusNotEqual(transaction.region, dateTime)
+        val distinctCardNumberByIp =
+            transactionRepository.findDistinctByIpAndDateLessThanAndStatusNotEqual(transaction.ip, dateTime)
+
+        if (!determineStatus(
+                declineReasonList,
+                distinctCardNumberByRegions,
+                distinctCardNumberByIp,
+                { regions -> regions.size == 2 }
+            ) { ips -> ips.size == 2 }
+        ) {
+            status = TransactionStatus.MANUAL_PROCESSING
+        }
+        if (!determineStatus(
+                declineReasonList,
+                distinctCardNumberByRegions,
+                distinctCardNumberByIp,
+                { regions -> regions.size > 2 }
+            ) { ips -> ips.size > 2 }
+        ) {
+            status = TransactionStatus.PROHIBITED
+        }
+        if (declineReasonList.isEmpty()) {
+            declineReasonList.add(DeclineReason.NONE)
+        }
+        return Pair(status, declineReasonList)
+    }
+
+    private fun validateTransaction(
+        transactionTime: Optional<LocalDateTime>,
+        transaction: TransactionAddRequest
+    ) {
+        if (transactionTime.isEmpty) {
             throw IllegalArgumentException("invalid date time")
         }
         if (!isValidInet4Address(transaction.ip)) {
@@ -61,71 +151,17 @@ class AntiFraudServiceImpl(
         if (!regionValidator.validate(transaction.region)) {
             throw IllegalArgumentException("invalid region")
         }
-
-        var status: TransactionStatus = TransactionStatus.PROHIBITED
-
-        val declineReasonList = mutableSetOf<DeclineReason>()
-
-        if (transaction.amount < limitAllowed) {
-            status = TransactionStatus.ALLOWED
-        } else if (transaction.amount < limitManualProcessing) {
-            status = TransactionStatus.MANUAL_PROCESSING
-            declineReasonList.add(DeclineReason.AMOUNT)
-        } else {
-            declineReasonList.add(DeclineReason.AMOUNT)
-        }
-
-        if (findBlockedCardNumber(transaction.number) != null) {
-            status = TransactionStatus.PROHIBITED
-            declineReasonList.add(DeclineReason.CARD_NUMBER)
-        }
-        if (findBlockedIp(transaction.ip) != null) {
-            status = TransactionStatus.PROHIBITED
-            declineReasonList.add(DeclineReason.IP)
-        }
-
-        val time = dateTime.get()
-        if (!determineStatus(
-                transaction,
-                declineReasonList,
-                time,
-                { regions -> regions.size == 2 },
-                { ips -> ips.size == 2 })
-        ) {
-            status = TransactionStatus.MANUAL_PROCESSING
-        }
-        if (!determineStatus(
-                transaction,
-                declineReasonList,
-                time,
-                { regions -> regions.size > 2 },
-                { ips -> ips.size > 2 })
-        ) {
-            status = TransactionStatus.PROHIBITED
-        }
-
-        transactions.add(
-            Transaction(
-                1L + transactions.lastIndex,
-                transaction.amount,
-                transaction.number,
-                transaction.region,
-                time,
-                status,
-                transaction.ip,
-            )
-        )
-        if (declineReasonList.isEmpty()) {
-            declineReasonList.add(DeclineReason.NONE)
-        }
-        return TransactionAddResponse(status.toString(), declineReasonList)
     }
 
     override fun addFeedbackToTransaction(feedback: FeedbackForTransactionRequest): FeedbackForTransactionResponse {
         val transaction: Transaction
         try {
-            transaction = findTransactionById(feedback.transactionId)
-            if (isAllowAddFeedback(transaction)) {
+            val transactionOptional = transactionRepository.findById(feedback.transactionId)
+            if (transactionOptional.isEmpty) {
+                throw NotFoundException("transaction not exist")
+            }
+            transaction = transactionOptional.get()
+            if (transaction.feedback != TransactionStatus.NONE) {
                 throw AlreadyExistException("already have feedback")
             }
         } catch (e: NoSuchElementException) {
@@ -137,7 +173,9 @@ class AntiFraudServiceImpl(
         val status = transaction.status
 
         updateLimits(amount, status, feedbackValue)
-        updateTransactionFeedbackInRepository(transaction, feedbackValue)
+        transaction.updateFeedback(feedbackValue)
+
+        transactionRepository.save(transaction)
 
         return FeedbackForTransactionResponse(
             transaction.transactionId,
@@ -149,22 +187,6 @@ class AntiFraudServiceImpl(
             status,
             transaction.feedback
         )
-    }
-
-    private fun isAllowAddFeedback(transaction: Transaction) =
-        transaction.feedback != TransactionStatus.NONE
-
-    private fun updateTransactionFeedbackInRepository(
-        transaction: Transaction,
-        feedbackValue: String
-    ) {
-        transaction.updateFeedback(feedbackValue)
-
-        val index = transactions.indexOfFirst { it.transactionId == transaction.transactionId }
-        if (index == -1) {
-            throw IllegalArgumentException()
-        }
-        transactions[index] = transaction
     }
 
     private fun updateLimits(
@@ -237,44 +259,26 @@ class AntiFraudServiceImpl(
         limitAllowed = transactionLimitCalculator.decreaseLimit(limitAllowed, amount)
     }
 
-    override fun findTransactionById(transactionId: Long): Transaction {
-        return transactions.first { it.transactionId == transactionId }
-    }
-
     private fun determineStatus(
-        transaction: TransactionAddRequest,
         declineReasonList: MutableSet<DeclineReason>,
-        dateTime: LocalDateTime,
+        distinctCardNumberByRegions: List<String>,
+        distinctCardNumberByIp: List<String>,
         regionCorrelationFn: (regions: List<String>) -> Boolean,
         ipCorrelationFn: (regions: List<String>) -> Boolean
     ): Boolean {
-        val distinctRegions = getDistinctRegionsOfTransaction(transaction, dateTime)
-        val distinctIps = getDistinctIps(transaction, dateTime)
+        println(distinctCardNumberByRegions)
+        println(distinctCardNumberByIp)
         var ok = true
-        if (regionCorrelationFn(distinctRegions)) {
+        if (regionCorrelationFn(distinctCardNumberByRegions)) {
             declineReasonList.add(DeclineReason.REGION_CORRELATION)
             ok = false
         }
-        if (ipCorrelationFn(distinctIps)) {
+        if (ipCorrelationFn(distinctCardNumberByIp)) {
             declineReasonList.add(DeclineReason.IP_CORRELATION)
             ok = false
         }
         return ok
     }
-
-    private fun getDistinctIps(
-        transaction: TransactionAddRequest,
-        dateTime: LocalDateTime
-    ) = transactions.filter { it.ip != transaction.ip && it.date > dateTime.minusHours(2) }
-        .map { it.ip }
-        .distinct()
-
-    private fun getDistinctRegionsOfTransaction(
-        transaction: TransactionAddRequest,
-        dateTime: LocalDateTime
-    ) = transactions.filter { it.region != transaction.region && it.date > dateTime.minusHours(2) }
-        .map { it.region }
-        .distinct()
 
     private fun validateTime(date: String): Optional<LocalDateTime> {
         return try {
@@ -284,22 +288,17 @@ class AntiFraudServiceImpl(
         }
     }
 
-    override fun getAllSuspiciousIp(): List<IpItem> = blockedIpList.sortedBy { it.id }
+    override fun getAllSuspiciousIp(): List<IpItem> =
+        blockedIpRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
 
     override fun addSuspiciousIp(ipRequest: AddSuspiciousIpRequest): AddSuspiciousIpResponse {
         val ip = ipRequest.ip
-
-        if (findBlockedIp(ip) != null) {
+        val blockedIp = blockedIpRepository.findByIp(ip)
+        if (blockedIp.isNotEmpty()) {
             throw AlreadyExistException("IP already banned")
         }
-
-        val id = blockedIpList.lastIndex.toLong() + 1L
-        blockedIpList.add(IpItem(id, ip))
-        return AddSuspiciousIpResponse(id, ip)
-    }
-
-    private fun findBlockedIp(ip: String): IpItem? {
-        return blockedIpList.firstOrNull { ip == it.ip }
+        val userDB = blockedIpRepository.save(IpItem(ip))
+        return AddSuspiciousIpResponse(userDB.id, ip)
     }
 
     override fun removeSuspiciousIp(ip: String) {
@@ -307,12 +306,13 @@ class AntiFraudServiceImpl(
             throw IllegalArgumentException("invalid $ip")
         }
 
-        if (!blockedIpList.removeIf { ip == it.ip }) {
-            throw NotFoundException("IP $ip not exist")
-        }
+        blockedIpRepository.findByIp(ip)
+            .map(blockedIpRepository::delete)
     }
 
-    override fun getAllStolenCard(): List<Card> = stolenCardList.sortedBy { it.id }
+    override fun getAllStolenCard(): List<Card> {
+        return blockedCardRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
+    }
 
     override fun addStolenCard(ipRequest: AddStolenCard): Card {
         val cardNumber = ipRequest.number
@@ -320,25 +320,20 @@ class AntiFraudServiceImpl(
             throw IllegalArgumentException("invalid $cardNumber")
         }
 
-        val ipItem = findBlockedCardNumber(cardNumber)
-        if (ipItem != null) {
+        val blockedCard = blockedCardRepository.findByNumber(cardNumber)
+        if (blockedCard.isNotEmpty()) {
             throw AlreadyExistException("card ${ipRequest.number} already banned")
         }
-        val id = stolenCardList.lastIndex.toLong() + 1L
-        val card = Card(id, cardNumber)
-        stolenCardList.add(card)
-        return card
-    }
 
-    private fun findBlockedCardNumber(cardNumber: String) = stolenCardList.firstOrNull { cardNumber == it.number }
+        return blockedCardRepository.save(Card(number = cardNumber))
+    }
 
     override fun removeStolenCard(cardNumber: String) {
         if (!isValidCreditCardNumber(cardNumber)) {
             throw IllegalArgumentException("invalid $cardNumber")
         }
 
-        if (!stolenCardList.removeIf { cardNumber == it.number }) {
-            throw NotFoundException("IP $cardNumber not exist")
-        }
+        blockedCardRepository.findByNumber(cardNumber)
+            .map(blockedCardRepository::delete)
     }
 }

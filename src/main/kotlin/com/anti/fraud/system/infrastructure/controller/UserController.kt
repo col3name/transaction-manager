@@ -15,6 +15,7 @@ class UserController(@Autowired val userService: UserService) {
         val body = userService.getAllUsers()
         ResponseEntity(body, HttpStatus.OK)
     } catch (e: Exception) {
+        e.printStackTrace()
         ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
@@ -23,8 +24,10 @@ class UserController(@Autowired val userService: UserService) {
         try {
             ResponseEntity(userService.createUser(user), HttpStatus.CREATED)
         } catch (e: AlreadyExistException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.CONFLICT)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
 
@@ -34,8 +37,10 @@ class UserController(@Autowired val userService: UserService) {
             userService.deleteUser(username)
             ResponseEntity(ActionResponse("Deleted successfully!", username), HttpStatus.OK)
         } catch (e: NotFoundException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -46,12 +51,16 @@ class UserController(@Autowired val userService: UserService) {
             val changeUserRole = userService.changeUserRole(user)
             ResponseEntity(changeUserRole, HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: NotFoundException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: AlreadyExistException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.CONFLICT)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -63,10 +72,13 @@ class UserController(@Autowired val userService: UserService) {
             val response = ActionResponse("User ${user.username} ${if (isLock) "locked" else "unlocked"}!")
             ResponseEntity(response, HttpStatus.OK)
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.BAD_REQUEST)
         } catch (e: NotFoundException) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: Exception) {
+            e.printStackTrace()
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }

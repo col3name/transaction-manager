@@ -12,8 +12,7 @@ class UnprocessableEntityException(message: String) : Exception(message)
 interface AntiFraudService {
     fun getTransactionHistory(): List<Transaction>
     fun getTransactionHistoryByCardNumber(cardNumber: String): List<Transaction>
-    fun findTransactionById(transactionId: Long): Transaction
-    fun calculate(transaction: TransactionAddRequest): TransactionAddResponse
+    fun addTransaction(transaction: TransactionAddRequest): TransactionAddResponse
     fun addFeedbackToTransaction(feedback: FeedbackForTransactionRequest): FeedbackForTransactionResponse
 
     fun addSuspiciousIp(ipRequest: AddSuspiciousIpRequest): AddSuspiciousIpResponse

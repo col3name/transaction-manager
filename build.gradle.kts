@@ -22,12 +22,9 @@ extra["snippetsDir"] = file("build/generated-snippets")
 extra["testcontainersVersion"] = "1.17.4"
 
 dependencies {
-
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
-
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-rest")
-    implementation("org.springframework.boot:spring-boot-starter-hateoas")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -57,12 +54,3 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-
-tasks.test {
-//    outputs.dir(snippetsDir)
-}
-
-//tasks.asciidoctor {
-//    inputs.dir(dirsnippetsDir)
-//    dependsOn(test)
-//}
