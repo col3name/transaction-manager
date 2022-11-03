@@ -24,7 +24,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
 import java.util.*
 
-
 @Service
 class AntiFraudServiceImpl(
     @Autowired
